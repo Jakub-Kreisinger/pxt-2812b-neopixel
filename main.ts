@@ -1,40 +1,62 @@
-let pasek: neopixel.Strip = neopixel.create(DigitalPin.P8, 24, NeoPixelMode.RGB)
-pasek.showRainbow(1, 360)
+let strip = neopixel.create(DigitalPin.P8, 24, NeoPixelMode.RGB)
+strip.showRainbow(1, 360)
+let speed = 0 
+let direction = 1 
+let lastPressA = 0
+let lastPressB = 0
 
-let rotace = 0
-let zastaveni = false
-let smer = false
+basic.forever(() => {
+   
+    basic.showNumber(speed)
 
-basic.forever(function () {
     
-    if (input.buttonIsPressed(Button.AB)) {
-        smer = !smer 
-        basic.pause(500) 
-    }
+    let delay = Math.max(10, 1000 - (speed * 10))
 
-    if (input.logoIsPressed()) {
-        zastaveni = !zastaveni
-        basic.pause(500)
-    }
     
-    if (!zastaveni) { 
-        pasek.rotate(1)
-        pasek.show()
-        basic.pause(rotace)
+    if (direction === 1) {
+        strip.rotate(1)
+    } else {
+        strip.rotate(-1)
+    }
+
+    
+    strip.show()
+
+    
+    basic.pause(delay)
+})
+
+input.onButtonPressed(Button.A, () => {
+    let now = input.runningTime()
+    if (now - lastPressA > 400) {
+        speed = Math.min(99, speed + 1)
+        lastPressA = now
+    } else {
+        control.inBackground(() => {
+            while (input.buttonIsPressed(Button.A)) {
+                basic.pause(100)
+                speed = Math.min(99, speed + 1)
+            }
+        })
     }
 })
 
-input.onButtonPressed(Button.B, function () {
-    if (rotace > 10) {
-        rotace -= 10
-        basic.showNumber(rotace / 100)
+input.onButtonPressed(Button.B, () => {
+    let now = input.runningTime()
+    if (now - lastPressB > 400) {
+        speed = Math.max(0, speed - 1)
+        lastPressB = now
+    } else {
+        control.inBackground(() => {
+            while (input.buttonIsPressed(Button.B)) {
+                basic.pause(100)
+                speed = Math.max(0, speed - 1)
+            }
+        })
     }
 })
 
-input.onButtonPressed(Button.A, function () {
-    if (rotace < 1000) {
-        rotace += 10
-        basic.showNumber(rotace / 100)
-    }
-})
+input.onLogoEvent(TouchButtonEvent.Pressed, () => {
 
+    direction *= -1
+})
